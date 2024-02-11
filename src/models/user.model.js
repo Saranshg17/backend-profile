@@ -2,14 +2,14 @@ import mongoose,{Schema} from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 
-const CategorySchema = new Schema({
-    category:{
-        type:String,
-        unique:true
-    }
-})
+// const CategorySchema = new Schema({
+//     category:{
+//         type:String,
+//         unique:true
+//     }
+// })
 
-export const category=mongoose.model("category",CategorySchema)
+// export const category=mongoose.model("category",CategorySchema)
 
 const userSchema = new Schema({
     email:{
@@ -30,14 +30,11 @@ const userSchema = new Schema({
     },
     Default:{
         type:Boolean,
-        required: true,
     },
-    categories:[
-        {
-            type:mongoose.Schema.ObjectId,
-            ref: "category"
-        }
-    ],
+    categories:{
+        type: String,
+        required: true
+    },
     refreshToken:{
         type:String
     }
