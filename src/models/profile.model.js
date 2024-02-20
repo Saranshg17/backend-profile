@@ -7,7 +7,7 @@ const ProfileSchema = new Schema({
         index:true
     },
     Categories:{
-        type: String,
+        type: [String],
         required: true
     }
 },

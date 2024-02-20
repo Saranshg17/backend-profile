@@ -43,14 +43,14 @@ const registerUser = asyncHandler(async (req,res) => {
 
     const Profile = await profiles.create({
         ProfileName: profile || "Profile-1",
-        Categories: categories || " "
+        Categories: categories.split("-") || []
     })
 
     //create user object-create entry in db
     const user = await users.create({
         email: email,
         password: password,
-        profile: Profile._id,
+        profile: [Profile._id],
         Default: Profile._id,
         // categories: categories || ""
     })
@@ -96,7 +96,7 @@ const loginUser = asyncHandler(async (req,res) => {
     //validation -correct credentials
     const validation =await user.isPasswordCorrect(password)
 
-    if(!user){
+    if(!validation){
         throw new ApiError(401,"Email or Password is incorrect")
     }
 
@@ -160,6 +160,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
 const newprofile = asyncHandler(async (req,res) => {
     const {email,password,profile,Default,categories} = req.body
 
+    console.log(req.body)
+
     if(
         [email,password,profile,categories].some((field)=>field?.trim()==="")
     ){
@@ -175,11 +177,48 @@ const newprofile = asyncHandler(async (req,res) => {
     //validation -correct credentials
     const validation =await user.isPasswordCorrect(password)
 
-    if(!user){
+    if(!validation){
         throw new ApiError(401,"Email or Password is incorrect")
     }
 
-    
+    const Profile = await profiles.create({
+        ProfileName: profile || "Profile-1",
+        Categories: categories.split("-") || []
+    })
+
+    const profile_ = user.profile
+    profile_.push(Profile._id)
+
+    if(!Default){
+        await users.findByIdAndUpdate(user._id,
+            {
+                $set: {
+                    profile: profile_
+                }
+            },
+            {
+                new: true
+            }
+        )
+    }
+
+    if(Default){
+        await users.findByIdAndUpdate(user._id,
+            {
+                $set: {
+                    profile: profile_,
+                    Default: Profile._id
+                }
+            },
+            {
+                new: true
+            }
+        )
+    }
+
+    return res.status(201).json(
+        new ApiResponse(200,Profile,"profile created successfully")
+    )
 
 })
 

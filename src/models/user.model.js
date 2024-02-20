@@ -15,7 +15,7 @@ const userSchema = new Schema({
         index:true
     },
     profile:{
-        type:String,
+        type:[String],
         index:true
     },
     Default:{
