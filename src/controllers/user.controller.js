@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { users } from "../models/user.model.js";
+import { profiles } from "../models/profile.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const generateAccessandRefreshToken = async(userId) => {
@@ -21,7 +22,7 @@ const generateAccessandRefreshToken = async(userId) => {
 
 const registerUser = asyncHandler(async (req,res) => {
     //get user details from frontend
-    const {email,password,profile, Default,categories}=req.body
+    const {email,password,profile,categories}=req.body
     console.log(req.body)
 
     //validation - not empty
@@ -33,44 +34,49 @@ const registerUser = asyncHandler(async (req,res) => {
 
 
     // check if already exists: email, profile
-    const existedprofile = await users.findOne({
+    const existeduser = await users.findOne({
         $and: [{ email }]
     })
-    if (existedprofile){
+    if (existeduser){
         throw new ApiError(409,"email already registered")
     }
 
+    const Profile = await profiles.create({
+        ProfileName: profile || "Profile-1",
+        Categories: categories || " "
+    })
+
     //create user object-create entry in db
     const user = await users.create({
-        email,
-        password,
-        profile: profile || "Profile1",
-        Default:Default || true,
-        categories: categories || ""
+        email: email,
+        password: password,
+        profile: Profile._id,
+        Default: Profile._id,
+        // categories: categories || ""
     })
 
     //remove password and refresh token field from response
-    const createdProfile = await users.findById(user._id).select(
+    const registeredUser = await users.findById(user._id).select(
         "-password -refreshToken"
     )
 
-    console.log(createdProfile)
+    console.log(registeredUser)
 
     //check for user creation
-    if(!createdProfile){
+    if(!registeredUser){
         throw new ApiError(500,"Something went wrong while registering the user")
     }
 
 
     //return response
     return res.status(201).json(
-        new ApiResponse(200,createdProfile,"profile registered successfully")
+        new ApiResponse(200,registeredUser,"profile registered successfully")
     )
 })
 
 const loginUser = asyncHandler(async (req,res) => {
     //get details from frontend
-    const {email,password,profile} = req.body
+    const {email,password} = req.body
     console.log(req.body)
 
     //validation - not empty

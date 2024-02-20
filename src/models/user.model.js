@@ -19,11 +19,11 @@ const userSchema = new Schema({
         index:true
     },
     Default:{
-        type:Boolean,
+        type:String,
     },
-    categories:{
-        type: String,
-    },
+    // categories:{
+    //     type: String,
+    // },
     refreshToken:{
         type:String
     }
