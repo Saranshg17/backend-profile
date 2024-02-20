@@ -99,7 +99,7 @@ const loginUser = asyncHandler(async (req,res) => {
     const {accessToken, refreshToken} =await generateAccessandRefreshToken(user._id)
 
     //remove password and refreshToken from response
-    const userUpdated = await user.findById(user._id).select(
+    const userUpdated = await users.findById(user._id).select(
         "-password -refreshToken"
     )
 
@@ -127,7 +127,7 @@ const loginUser = asyncHandler(async (req,res) => {
 })
 
 const logoutUser = asyncHandler(async(req,res)=>{
-    await User.findByIdAndUpdate(req.user._id,
+    await users.findByIdAndUpdate(req.user._id,
         {
             $set: {
                 refreshToken: undefined
