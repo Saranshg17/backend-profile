@@ -222,7 +222,47 @@ const newprofile = asyncHandler(async (req,res) => {
 
 })
 
+const defaultprofile = asyncHandler(async (req,res)=>{
+    const {email,password,id}= req.body
+
+    if(
+        [email,password, id].some((field)=>field?.trim()==="")
+    ){
+        throw new ApiError(400, "Some required fields are empty")
+    }
+
+    const user = await users.findOne({ email })
+
+    if(!user){
+        throw new ApiError(404,"User doesn't exist")
+    }
+
+    //validation -correct credentials
+    const validation =await user.isPasswordCorrect(password)
+
+    if(!validation){
+        throw new ApiError(401,"Email or Password is incorrect")
+    }
+
+    await users.findByIdAndUpdate(user._id,
+        {
+            $set: {
+                Default: id
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res.status(201).json(
+        new ApiResponse(200,user,"Default profile changed successfully")
+    )
+
+})
+
 export {registerUser}
 export {loginUser}
 export {logoutUser}
 export {newprofile}
+export {defaultprofile}
