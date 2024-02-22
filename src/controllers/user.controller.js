@@ -245,16 +245,20 @@ const defaultprofile = asyncHandler(async (req,res)=>{
         throw new ApiError(401,"Email or Password is incorrect")
     }
 
-    await users.findByIdAndUpdate(user._id,
-        {
-            $set: {
-                Default: id
+    try {
+        await users.findByIdAndUpdate(user._id,
+            {
+                $set: {
+                    Default: id
+                }
+            },
+            {
+                new: true
             }
-        },
-        {
-            new: true
-        }
-    )
+        )
+    } catch (error) {
+        throw new ApiError(401,"Profile doesn't exist")
+    }
 
     return res.status(201).json(
         new ApiResponse(200,user,"Default profile changed successfully")
@@ -277,7 +281,8 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
         if(!user){
             throw new ApiError(401,"Invalid Refresh Token")
         }
-    
+        console.log(user.refreshToken)
+
         if(incomingrefreshToken!==user?.refreshToken){
             throw new ApiError(401,"Refresh Token is expired or used")
         }
@@ -289,6 +294,8 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
     
         const {accessToken, newrefreshToken} = await generateAccessandRefreshToken(user._id)
     
+        console.log(accessToken,newrefreshToken)
+
         return res
         .status(200)
         .cookie("accessToken",accessToken,options)
@@ -296,7 +303,8 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
         .json(
             new ApiResponse(
             200,
-            {accessToken, refreshToken: newrefreshToken},
+            {accessToken, refreshToken: 
+                newrefreshToken},
             "Access Token Refreshed"
             )
         )
@@ -305,11 +313,56 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
     }
 })
 
+const updateProfile = asyncHandler(async (req,res)=>{
+    const {email,password,id, categories} = req.body
+    
+    if(
+        [email,password, id, categories].some((field)=>field?.trim()==="")
+    ){
+        throw new ApiError(400, "Some required fields are empty")
+    }
+
+    const user = await users.findOne({ email })
+
+    if(!user){
+        throw new ApiError(404,"User doesn't exist")
+    }
+
+    //validation -correct credentials
+    const validation =await user.isPasswordCorrect(password)
+
+    if(!validation){
+        throw new ApiError(401,"Email or Password is incorrect")
+    }
+
+    try {
+        const profile_ = await profiles.findByIdAndUpdate(id,
+            {
+                $set: {
+                    Categories: categories.split("-") || []
+                }
+            },
+            {
+                new: true
+            }
+        )
+
+        return res.status(201).json(
+            new ApiResponse(200,profile_,"Profile updated successfully")
+        )
+        
+    } catch (error) {
+        throw new ApiError(401,"Profile doesn't exist")
+    }
+
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     defaultprofile,
     newprofile,
-    refreshAccessToken
+    refreshAccessToken,
+    updateProfile
 }
