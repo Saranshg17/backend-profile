@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { logoutUser, registerUser, loginUser, newprofile, defaultprofile, refreshAccessToken, updateProfile } from "../controllers/user.controller.js";
+import { logoutUser, registerUser, loginUser, newprofile, defaultprofile, refreshAccessToken, updateProfile , deleteProfile} from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router()
@@ -10,6 +10,7 @@ router.route("/profile").post(newprofile)
 router.route("/default").post(defaultprofile)
 router.route("/updateprofile").post(updateProfile)
 router.route("/refreshtoken").post(refreshAccessToken)
+router.route("/deleteprofile").post(deleteProfile)
 
 //secured routes
 router.route("/logout").post(verifyJWT, logoutUser)

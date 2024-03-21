@@ -357,6 +357,67 @@ const updateProfile = asyncHandler(async (req,res)=>{
 
 })
 
+const deleteProfile = asyncHandler(async (req,res)=>{
+    const {email,password,id}=req.body
+
+    if(
+        [email,password, id].some((field)=>field?.trim()==="")
+    ){
+        throw new ApiError(400, "Some required fields are empty")
+    }
+
+    const user = await users.findOne({ email })
+
+    if(!user){
+        throw new ApiError(404,"User doesn't exist")
+    }
+
+    //validation -correct credentials
+    const validation =await user.isPasswordCorrect(password)
+
+    if(!validation){
+        throw new ApiError(401,"Email or Password is incorrect")
+    }
+
+    const id_=user._id
+
+    if(id===user.Default){
+        throw new ApiError(400,"You can't delete default profile. Change default profile first")
+    }
+
+    const profiles_=user.profile.filter(item => item!=id);
+
+    try {
+        const user_ = await users.findByIdAndUpdate(id_,
+            {
+                $set: {
+                    profile: profiles_
+                }
+            },
+            {
+                new: true
+            }
+        )
+        
+        profiles.deleteOne({_id:id})
+        .then(()=>{
+            return res.status(201).json(
+                new ApiResponse(200,user_,"Profile deleted successfully")
+            )
+        })
+        .catch((err)=>{
+            throw new ApiError(400,"Profile doesn't exist")
+        })
+
+
+        
+
+    } catch (error) {
+        throw new ApiError(401,error)
+    }
+
+})
+
 export {
     registerUser,
     loginUser,
@@ -364,5 +425,6 @@ export {
     defaultprofile,
     newprofile,
     refreshAccessToken,
-    updateProfile
+    updateProfile,
+    deleteProfile
 }
